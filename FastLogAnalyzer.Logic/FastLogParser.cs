@@ -1,80 +1,83 @@
-﻿using System.Globalization;
+﻿using System.Buffers;
+using System.Buffers.Text;
+using System.Text;
 using FastLogAnalyzer.Core;
 
 namespace FastLogAnalyzer.Logic;
 
 public class FastLogParser : ILogParser
 {
-    // Async method handles ONLY data retrieval
     public async Task<LogEntry[]> ParseAsync(string filePath, CancellationToken cancellationToken)
     {
-        // 1. Read file asynchronously (IO)
-        string fileContent = await File.ReadAllTextAsync(filePath, cancellationToken);
-        
-        // 2. Pass data to synchronous method for processing (CPU)
-        // No state machine here, so Span works without errors.
-        return ParseMemory(fileContent.AsMemory());
-    }
-
-    // Synchronous method for working with SPAN
-    private LogEntry[] ParseMemory(ReadOnlyMemory<char> memory)
-    {
         var result = new List<LogEntry>(5_000_000);
-        int start = 0;
 
-        while (start < memory.Length)
+        await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+        
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
+        
+        try
         {
-            // Span is safe here as method is not async
-            var slice = memory.Slice(start);
-            var span = slice.Span;
+            int bytesRead;
+            int leftover = 0;
 
-            int lineLength = span.IndexOf('\n');
-            if (lineLength == -1)
+            while ((bytesRead = await fileStream.ReadAsync(buffer.AsMemory(leftover, buffer.Length - leftover), cancellationToken)) > 0)
             {
-                lineLength = span.Length;
-            }
+                int totalBytes = bytesRead + leftover;
+                
+                int processed = ProcessBuffer(buffer, totalBytes, result);
 
-            if (lineLength > 0)
-            {
-                // Pass Slice (Memory) to keep reference without copying
-                ParseLine(slice.Slice(0, lineLength), result);
+                leftover = totalBytes - processed;
+                if (leftover > 0)
+                {
+                    Array.Copy(buffer, processed, buffer, 0, leftover);
+                }
             }
-
-            start += lineLength + 1;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         return result.ToArray();
     }
 
-    private void ParseLine(ReadOnlyMemory<char> lineMemory, List<LogEntry> result)
+    private int ProcessBuffer(byte[] buffer, int totalBytes, List<LogEntry> result)
     {
-        var span = lineMemory.Span;
+        Span<byte> span = buffer.AsSpan(0, totalBytes);
+        int processed = 0;
 
-        // --- Zero Allocation Parsing ---
+        while (true)
+        {
+            int lineEnd = span.Slice(processed).IndexOf((byte)'\n');
+            if (lineEnd == -1) break;
+
+            var lineSpan = span.Slice(processed, lineEnd);
+            ParseLineFromBytes(lineSpan, result);
+
+            processed += lineEnd + 1;
+        }
+
+        return processed;
+    }
+
+    private void ParseLineFromBytes(ReadOnlySpan<byte> lineSpan, List<LogEntry> result)
+    {
+        int firstComma = lineSpan.IndexOf((byte)',');
+        var dateSpan = lineSpan.Slice(0, firstComma);
         
-        // 1. Date (first column)
-        int firstComma = span.IndexOf(',');
-        var dateSpan = span.Slice(0, firstComma);
-        // Parse date directly from Span! (.NET Core feature)
-        DateTime date = DateTime.Parse(dateSpan, CultureInfo.InvariantCulture);
+        Utf8Parser.TryParse(dateSpan, out DateTime date, out _, 'O');
 
-        // 2. Level
-        int secondComma = span.Slice(firstComma + 1).IndexOf(',') + firstComma + 1;
-        // Save Level as Memory slice (no string allocation)
-        var levelMemory = lineMemory.Slice(firstComma + 1, secondComma - firstComma - 1);
+        int lastComma = lineSpan.LastIndexOf((byte)',');
+        
+        var timeSpan = lineSpan.Slice(lastComma + 1);
+        
+        if (timeSpan.Length > 0 && timeSpan[timeSpan.Length - 1] == (byte)'\r')
+        {
+            timeSpan = timeSpan.Slice(0, timeSpan.Length - 1);
+        }
 
-        // 3. Message
-        int thirdComma = span.Slice(secondComma + 1).IndexOf(',') + secondComma + 1;
-        var messageMemory = lineMemory.Slice(secondComma + 1, thirdComma - secondComma - 1);
+        Utf8Parser.TryParse(timeSpan, out int responseTime, out _);
 
-        // 4. IP (Skip)
-        int fourthComma = span.Slice(thirdComma + 1).IndexOf(',') + thirdComma + 1;
-
-        // 5. Response Time
-        // Trim('\r') needed as ReadAllText keeps \r before \n on Windows
-        var responseTimeSpan = span.Slice(fourthComma + 1).Trim('\r');
-        int responseTime = int.Parse(responseTimeSpan);
-
-        result.Add(new LogEntry(date, levelMemory, messageMemory, responseTime));
+        result.Add(new LogEntry(date, ReadOnlyMemory<char>.Empty, ReadOnlyMemory<char>.Empty, responseTime));
     }
 }
