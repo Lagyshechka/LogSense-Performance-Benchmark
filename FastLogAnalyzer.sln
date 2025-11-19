@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastLogAnalyzer.Core", "FastLogAnalyzer.Core\FastLogAnalyzer.Core.csproj", "{767B918B-EFF9-4D50-9430-72975B624542}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastLogAnalyzer.Logic", "FastLogAnalyzer.Logic\FastLogAnalyzer.Logic.csproj", "{3176841D-18A4-474F-9F23-C171D0B56357}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastLogAnalyzer.DataGenerator", "FastLogAnalyzer.DataGenerator\FastLogAnalyzer.DataGenerator.csproj", "{932FD83A-C8E6-4918-B758-411B23816F9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastLogAnalyzer.UI", "FastLogAnalyzer.UI\FastLogAnalyzer.UI.csproj", "{20C4A284-C7BC-4B58-8F0D-9508AA7C9C8E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{767B918B-EFF9-4D50-9430-72975B624542}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{767B918B-EFF9-4D50-9430-72975B624542}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{767B918B-EFF9-4D50-9430-72975B624542}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{767B918B-EFF9-4D50-9430-72975B624542}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3176841D-18A4-474F-9F23-C171D0B56357}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3176841D-18A4-474F-9F23-C171D0B56357}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3176841D-18A4-474F-9F23-C171D0B56357}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3176841D-18A4-474F-9F23-C171D0B56357}.Release|Any CPU.Build.0 = Release|Any CPU
+		{932FD83A-C8E6-4918-B758-411B23816F9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{932FD83A-C8E6-4918-B758-411B23816F9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{932FD83A-C8E6-4918-B758-411B23816F9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{932FD83A-C8E6-4918-B758-411B23816F9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20C4A284-C7BC-4B58-8F0D-9508AA7C9C8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20C4A284-C7BC-4B58-8F0D-9508AA7C9C8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20C4A284-C7BC-4B58-8F0D-9508AA7C9C8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20C4A284-C7BC-4B58-8F0D-9508AA7C9C8E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
